@@ -2,6 +2,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 from users.models import User
+from users.serializers import UserProfileSerializer
 
 from django.test.client import MULTIPART_CONTENT, encode_multipart, BOUNDARY
 from PIL import Image
@@ -59,6 +60,12 @@ class UserProfileTest(APITestCase):
             "date_of_birth": "2001-01-01"
             }
         cls.user = User.objects.create_user("one@gmail.com", "one", "1")
+        cls.users = []
+        cls.users.append(User.objects.create_user("six@gmail.com", "six", "1"))
+        cls.users.append(User.objects.create_user("two@gmail.com", "two", "1"))
+        cls.users.append(User.objects.create_user("three@gmail.com", "three", "1"))
+        cls.users.append(User.objects.create_user("four@gmail.com", "뽀", "1"))
+        cls.users.append(User.objects.create_user("five@gmail.com", "five", "1"))
 
 
     def setUp(self):
@@ -80,5 +87,13 @@ class UserProfileTest(APITestCase):
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}"
         )
 
-        # self.assertEqual(response.data["message"], "글 작성 완료!!")
         self.assertEqual(response.status_code, 200)
+
+
+    def test_get_profile(self):
+        for user in self.users:
+            url = f"/user/profile/{user.id}/"
+            response = self.client.get(url)
+            serializer = UserProfileSerializer(user).data
+            for key, value in serializer.items():
+                self.assertEqual(response.data[key], value)
